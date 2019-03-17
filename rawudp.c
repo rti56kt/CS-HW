@@ -58,6 +58,16 @@ struct dnsquery {
 	unsigned short int dnsq_qclass;
 };
 
+// DNS additional's structure
+struct dnsadditional {
+	unsigned char      dnsa_name;
+	unsigned short int dnsa_type;
+	unsigned short int dnsa_udppayloadsize;
+	unsigned short int dnsa_rccodenednsver;
+	unsigned short int dnsa_z;
+	unsigned short int dnsa_rdata;
+};
+
 // Function for checksum calculation. From the RFC,
 // the checksum algorithm is:
 
@@ -165,7 +175,7 @@ int main(int argc, char *argv[])
 	dnsh->dnsh_qdcount = htons(1);
 	dnsh->dnsh_ancount = 0;
 	dnsh->dnsh_nscount = 0;
-	dnsh->dnsh_arcount = 0;
+	dnsh->dnsh_arcount = htons(1);
 
 	unsigned char domain_name[] = "isc.org";
 	// Standard DNS Domain Name Notation
@@ -198,9 +208,12 @@ int main(int argc, char *argv[])
 	dnsq->dnsq_qclass = htons(0x0001);
 	dnsq->dnsq_qtype = htons(0x00ff);
 
-	
-	ip->iph_len = sizeof(struct ipheader) + sizeof(struct udpheader) + sizeof(struct dnsheader) + sizeof(dnsq_dname) + sizeof(struct dnsquery);
-	udp->udph_len = htons(sizeof(struct udpheader) + sizeof(struct dnsheader) + sizeof(dnsq_dname) + sizeof(struct dnsquery));
+	struct dnsadditional *dnsa = (struct dnsquery * ) (buffer + sizeof(struct ipheader) + sizeof(struct udpheader) + sizeof(struct dnsheader) + sizeof(dnsq_dname) + sizeof(struct dnsquery));
+	dnsa->dnsa_type = htons(41);
+	dnsa->dnsa_udppayloadsize = htons(512);
+
+	ip->iph_len = sizeof(struct ipheader) + sizeof(struct udpheader) + sizeof(struct dnsheader) + sizeof(dnsq_dname) + sizeof(struct dnsquery) + sizeof(struct dnsadditional);
+	udp->udph_len = htons(sizeof(struct udpheader) + sizeof(struct dnsheader) + sizeof(dnsq_dname) + sizeof(struct dnsquery) + sizeof(struct dnsadditional));
 
 	// Inform the kernel do not fill up the packet structure. we will build our own...
 	if(setsockopt(sd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0)
