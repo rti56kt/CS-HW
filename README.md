@@ -1,4 +1,4 @@
-# Introduction to Computer Security
+# NCTU Introduction to Computer Security
 
 [Spring'19] NCTU CS - Introduction to Computer Security Projects
 
